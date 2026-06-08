@@ -1,7 +1,8 @@
 {
   "name": "滴了个滴",
   "short_name": "打卡",
-  "start_url": "/",
+  "start_url": "/clock-in-app/",
+  "scope": "/clock-in-app/",
   "display": "standalone",
   "background_color": "#F7F8F5",
   "theme_color": "#F7F8F5",
