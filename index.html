@@ -508,8 +508,8 @@ function render() {
  const wa=wh.length?wh.reduce((a,b)=>a+b,0)/wh.length:null;const wn=getWeekNumber(w);
  let ws=''; if(wa!==null){const d=S-wa;ws=d>0?`<div class="week-gap">差 ${d.toFixed(1)}H</div>`:`<div class="week-gap ok">达标</div>`;}
  const collapsed=idx>0&&wk.length>1;
+ // Always show current week and weeks with records
  const hasAnyRecord=ds.some(k=>r[k]&&(r[k].in||r[k].out));
- // Only show weeks that have at least one record OR are current week
  const isCurrentWeek=getWeekKey(todayKey)===w;
  if(!hasAnyRecord&&!isCurrentWeek) return;
  html+=`<div class="week-group${collapsed?' collapsed':''}" data-week="${w}"><div class="week-header"><div class="week-info"><div class="week-tag">第${wn}周</div><div class="week-range">${getWeekRange(w)}</div></div><div class="week-avg">${wa!==null?`<div class="week-avg-val">均 ${wa.toFixed(1)}H</div>`:'<div class="week-avg-val">--</div>'}${ws}</div></div><div class="day-list">`;
