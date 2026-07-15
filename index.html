@@ -10,6 +10,16 @@
 <meta name="format-detection" content="telephone=no">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon-192.png">
+<script>
+// Register Service Worker for offline/cache-first loading
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').then(() => {
+    console.log('SW registered');
+  }).catch(err => {
+    console.log('SW failed:', err);
+  });
+}
+</script>
 <title>滴了个滴</title>
 <style>
  :root {
