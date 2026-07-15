@@ -478,17 +478,37 @@ function render() {
  rs(document.getElementById('weekAvg'),document.getElementById('weekDays'),document.getElementById('weekTag'),wd);
  rs(document.getElementById('monthAvg'),document.getElementById('monthDays'),document.getElementById('monthTag'),md);
  const hw=document.getElementById('historyWrap'); const sk=Object.keys(r).sort((a,b)=>b.localeCompare(a));
- if(!sk.length){hw.innerHTML=`<div class="empty-history"><div class="empty-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div class="empty-text">暂无打卡记录</div><div class="empty-sub">点击上方按钮开始打卡</div></div>`;return;}
- const wm={}; sk.forEach(k=>{const w=getWeekKey(k);if(!wm[w])wm[w]=[];wm[w].push(k)});
+ // Generate all dates for recent weeks instead of only dates with records
+ const today=new Date(); const todayKey=getTodayKey();
+ // Go back up to 90 days to cover records, plus fill forward for current week
+ const allDates=[];
+ const startDate=new Date(today); startDate.setDate(today.getDate()-90);
+ const endDate=new Date(today);
+ // Extend end to this Sunday
+ const todayDay=today.getDay()||7; const thisSunday=new Date(today); thisSunday.setDate(today.getDate()+(7-todayDay));
+ // Build date list
+ for(let d=new Date(startDate); d<=thisSunday; d.setDate(d.getDate()+1)){
+ const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+ allDates.push(k);
+ }
+ const wm={}; allDates.forEach(k=>{const w=getWeekKey(k);if(!wm[w])wm[w]=[];wm[w].push(k)});
  const wk=Object.keys(wm).sort((a,b)=>b.localeCompare(a)); let html='';
  wk.forEach((w,idx)=>{
- const ds=wm[w],cd=ds.filter(k=>r[k].in&&r[k].out),wh=cd.map(k=>diffHours(r[k].in,r[k].out));
+ const ds=wm[w],cd=ds.filter(k=>r[k]&&r[k].in&&r[k].out),wh=cd.map(k=>diffHours(r[k].in,r[k].out));
  const wa=wh.length?wh.reduce((a,b)=>a+b,0)/wh.length:null;const wn=getWeekNumber(w);
  let ws=''; if(wa!==null){const d=S-wa;ws=d>0?`<div class="week-gap">差 ${d.toFixed(1)}H</div>`:`<div class="week-gap ok">达标</div>`;}
  const collapsed=idx>0&&wk.length>1;
+ const hasAnyRecord=ds.some(k=>r[k]&&(r[k].in||r[k].out));
+ // Only show weeks that have at least one record OR are current week
+ const isCurrentWeek=getWeekKey(todayKey)===w;
+ if(!hasAnyRecord&&!isCurrentWeek) return;
  html+=`<div class="week-group${collapsed?' collapsed':''}" data-week="${w}"><div class="week-header"><div class="week-info"><div class="week-tag">第${wn}周</div><div class="week-range">${getWeekRange(w)}</div></div><div class="week-avg">${wa!==null?`<div class="week-avg-val">均 ${wa.toFixed(1)}H</div>`:'<div class="week-avg-val">--</div>'}${ws}</div></div><div class="day-list">`;
- ds.forEach(k=>{const rc=r[k],d=new Date(k);const dn=DAYS_CN[d.getDay()],dl=`${d.getMonth()+1}月${d.getDate()}日`;const hc=rc.in&&rc.out,hrs=hc?diffHours(rc.in,rc.out):null,ok=hrs!==null&&hrs>=S;
- html+=`<div class="day-item ${hc?(ok?'ok':'incomplete'):''}"><div class="day-left"><div class="day-name">${dn}</div><div class="day-date">${dl}</div></div><div class="day-center"><div class="day-time" onclick="openEditModal('${k}','in')">${rc.in||'--:--'}</div><div class="day-arrow">→</div><div class="day-time" onclick="openEditModal('${k}','out')">${rc.out||'--:--'}</div></div><div class="day-right"><div class="day-hours">${hrs!==null?hrs.toFixed(1)+'h':'--'}</div></div><button class="day-del-btn" onclick="deleteDay('${k}')">×</button></div>`;
+ ds.forEach(k=>{
+ const rc=r[k]||{};const d=new Date(k);const dn=DAYS_CN[d.getDay()],dl=`${d.getMonth()+1}月${d.getDate()}日`;const hc=rc.in&&rc.out,hrs=hc?diffHours(rc.in,rc.out):null,ok=hrs!==null&&hrs>=S;
+ const isFuture=k>todayKey;
+ const itemCls=hc?(ok?'ok':'incomplete'):(!isFuture?'':'');
+ const inTime=rc.in||'--:--'; const outTime=rc.out||'--:--';
+ html+=`<div class="day-item ${itemCls}"><div class="day-left"><div class="day-name">${dn}</div><div class="day-date">${dl}</div></div><div class="day-center"><div class="day-time" onclick="openEditModal('${k}','in')">${inTime}</div><div class="day-arrow">→</div><div class="day-time" onclick="openEditModal('${k}','out')">${outTime}</div></div><div class="day-right"><div class="day-hours">${hrs!==null?hrs.toFixed(1)+'h':'--'}</div></div><button class="day-del-btn" onclick="deleteDay('${k}')">×</button></div>`;
  }); html+=`</div></div>`;
  });
  if(wk.length>1) html+=`<button class="expand-btn" id="expandBtn" onclick="expandHistory()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg> 展开更早记录（${wk.length-1}周）</button>`;
