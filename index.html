@@ -487,15 +487,15 @@ function render() {
  function rs(avgEl,daysEl,tagEl,days){if(!days.length){avgEl.textContent='-- h';daysEl.textContent='暂无数据';tagEl.innerHTML='';return;}const avg=days.reduce((a,b)=>a+b,0)/days.length;avgEl.textContent=avg.toFixed(1)+'h';daysEl.textContent=`共 ${days.length} 天`;if(avg<S) tagEl.innerHTML=`<div class="stat-tag warn">差 ${(S-avg).toFixed(1)}H</div>`;else tagEl.innerHTML=`<div class="stat-tag ok">达标 ✓</div>`;}
  rs(document.getElementById('weekAvg'),document.getElementById('weekDays'),document.getElementById('weekTag'),wd);
  rs(document.getElementById('monthAvg'),document.getElementById('monthDays'),document.getElementById('monthTag'),md);
- const hw=document.getElementById('historyWrap'); const sk=Object.keys(r).sort((a,b)=>b.localeCompare(a));
+ const hw=document.getElementById('historyWrap');
  // Generate all dates for recent weeks instead of only dates with records
- const today=new Date(); const todayKey=getTodayKey();
+ const nowDate=new Date(); const todayDateKey=getTodayKey();
  // Go back up to 90 days to cover records, plus fill forward for current week
  const allDates=[];
- const startDate=new Date(today); startDate.setDate(today.getDate()-90);
- const endDate=new Date(today);
+ const startDate=new Date(nowDate); startDate.setDate(nowDate.getDate()-90);
+ const endDate=new Date(nowDate);
  // Extend end to this Sunday
- const todayDay=today.getDay()||7; const thisSunday=new Date(today); thisSunday.setDate(today.getDate()+(7-todayDay));
+ const todayDay=nowDate.getDay()||7; const thisSunday=new Date(nowDate); thisSunday.setDate(nowDate.getDate()+(7-todayDay));
  // Build date list
  for(let d=new Date(startDate); d<=thisSunday; d.setDate(d.getDate()+1)){
  const k=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
@@ -510,12 +510,12 @@ function render() {
  const collapsed=idx>0&&wk.length>1;
  // Always show current week and weeks with records
  const hasAnyRecord=ds.some(k=>r[k]&&(r[k].in||r[k].out));
- const isCurrentWeek=getWeekKey(todayKey)===w;
+ const isCurrentWeek=getWeekKey(todayDateKey)===w;
  if(!hasAnyRecord&&!isCurrentWeek) return;
  html+=`<div class="week-group${collapsed?' collapsed':''}" data-week="${w}"><div class="week-header"><div class="week-info"><div class="week-tag">第${wn}周</div><div class="week-range">${getWeekRange(w)}</div></div><div class="week-avg">${wa!==null?`<div class="week-avg-val">均 ${wa.toFixed(1)}H</div>`:'<div class="week-avg-val">--</div>'}${ws}</div></div><div class="day-list">`;
  ds.forEach(k=>{
  const rc=r[k]||{};const d=new Date(k);const dn=DAYS_CN[d.getDay()],dl=`${d.getMonth()+1}月${d.getDate()}日`;const hc=rc.in&&rc.out,hrs=hc?diffHours(rc.in,rc.out):null,ok=hrs!==null&&hrs>=S;
- const isFuture=k>todayKey;
+ const isFuture=k>todayDateKey;
  const itemCls=hc?(ok?'ok':'incomplete'):(!isFuture?'':'');
  const inTime=rc.in||'--:--'; const outTime=rc.out||'--:--';
  html+=`<div class="day-item ${itemCls}"><div class="day-left"><div class="day-name">${dn}</div><div class="day-date">${dl}</div></div><div class="day-center"><div class="day-time" onclick="openEditModal('${k}','in')">${inTime}</div><div class="day-arrow">→</div><div class="day-time" onclick="openEditModal('${k}','out')">${outTime}</div></div><div class="day-right"><div class="day-hours">${hrs!==null?hrs.toFixed(1)+'h':'--'}</div></div><button class="day-del-btn" onclick="deleteDay('${k}')">×</button></div>`;
